@@ -916,7 +916,13 @@ class _RenderPositionDelegate extends RenderBox
   ) {
     final arrowPadding = _getArrowPadding;
 
-    final isBottom = targetPosition.dy +
+    // Calcular el porcentaje de altura que ocupa el target
+    final targetHeightPercentage = targetSize.height / screenSize.height;
+
+    // Si el target ocupa más del 50% de la altura de la pantalla, priorizar posicionamiento horizontal
+    final shouldPrioritizeHorizontal = targetHeightPercentage > 0.5;
+
+    final isBottom = !shouldPrioritizeHorizontal && targetPosition.dy +
             targetSize.height +
             totalHeight +
             targetTooltipGap +
@@ -924,7 +930,7 @@ class _RenderPositionDelegate extends RenderBox
             showcaseOffset.dy <=
         screenSize.height - screenEdgePadding;
 
-    final isTop = targetPosition.dy -
+    final isTop = !shouldPrioritizeHorizontal && targetPosition.dy -
             totalHeight -
             targetTooltipGap -
             arrowPadding -
@@ -945,6 +951,7 @@ class _RenderPositionDelegate extends RenderBox
             arrowPadding -
             showcaseOffset.dx <=
         screenSize.width - screenEdgePadding;
+
     return _SuitablePosition(
       isBottom: isBottom,
       isLeft: isLeft,
@@ -984,10 +991,12 @@ class _SuitablePosition {
   }
 
   TooltipPosition calculate() {
-    if (isBottom) return TooltipPosition.bottom;
-    if (isTop) return TooltipPosition.top;
+    // Priorizar posiciones horizontales
     if (isLeft) return TooltipPosition.left;
     if (isRight) return TooltipPosition.right;
+    // Si no hay espacio horizontal, intentar vertical
+    if (isBottom) return TooltipPosition.bottom;
+    if (isTop) return TooltipPosition.top;
     return TooltipPosition.bottom; // Default fallback
   }
 }
